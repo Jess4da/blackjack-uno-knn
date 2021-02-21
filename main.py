@@ -6,7 +6,6 @@ from card_detector import BlackJack_UNO
 samples_path = 'samples.data'  # samples data (contain numpy array of feature)
 responses_path = 'responses.data'  # responses data (contain classes of feature)
 
-
 bj_uno = BlackJack_UNO(samples_path, responses_path, thres=220)  # create class
 
 # create key list contains integer of waitkey keys
@@ -28,7 +27,7 @@ keys = [
 samples = np.empty((0, 100))
 responses = []
 
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(2)
 
 while cap.isOpened():
 
@@ -37,8 +36,6 @@ while cap.isOpened():
     img = img[60:, :]  # cut image to make image look wider
 
     out = img.copy()
-
-    # roi, out = bj_uno.train_data(img) # use to train data
 
     out = bj_uno.detect_number(img)  # usse to detect image
 
@@ -50,10 +47,11 @@ while cap.isOpened():
     if wk == ord('q'):
         break
 
+    # roi, out = bj_uno.train_data(img) # use to train data
     # train data by key
     elif wk in keys:
 
-        # make roi smaller for featuring data
+        # make roi smaller for feature extraction data
         roismall = cv2.resize(roi, (10, 10))
         print(chr(wk))  # logging key
 

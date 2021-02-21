@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 
-
 class BlackJack_UNO:
     def __init__(self, samples, responses, thres=200, new_train=False):
 
@@ -75,7 +74,7 @@ class BlackJack_UNO:
                 roismall = cv2.resize(roi, (10, 10))
                 roismall = roismall.reshape((1, 100))
                 roismall = np.float32(roismall)
-                retval, results, neigh_resp, dists = self.model.findNearest(roismall, k=1)
+                _, results, _, _ = self.model.findNearest(roismall, k=1)
                 raw_result = results[0][0]
                 if raw_result == 11:
                     string = 'u'
@@ -106,7 +105,7 @@ class BlackJack_UNO:
         return self.new_train
 
     # create ui
-    def create_ui(self, img, obj_list):
+    def __create_ui(self, img, obj_list):
         iH, iW = img.shape[:2]
         iX = 0
         iY1 = int(iH*.35)
@@ -178,6 +177,6 @@ class BlackJack_UNO:
 
         img, obj_list = self.__knn_detection(img)
 
-        img = self.create_ui(img, obj_list)
+        img = self.__create_ui(img, obj_list)
 
         return img
