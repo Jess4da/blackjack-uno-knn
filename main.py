@@ -1,90 +1,93 @@
 import cv2
-import os
-import glob
 import numpy as np
+
 from card_detector import BlackJack_UNO
 
-
-# cv2.namedWindow('GUI')
-# cv2.createTrackbar('CardNumber', 'GUI', 0, 9, lambda t: None)
-
-# data_path = 'new data'
-samples_path = 'samples.data'
-responses_path = 'responses.data'
+samples_path = 'samples.data'  # samples data (contain numpy array of feature)
+responses_path = 'responses.data'  # responses data (contain classes of feature)
 
 
-bj_uno = BlackJack_UNO(samples_path, responses_path, thres=150)
-# bj_uno.load_data(data_path)
+bj_uno = BlackJack_UNO(samples_path, responses_path, thres=220)  # create class
 
-keys = [i for i in range(48, 58)]
-responses = []
+# create key list contains integer of waitkey keys
+keys = [
+    ord('1'),
+    ord('2'),
+    ord('3'),
+    ord('4'),
+    ord('5'),
+    ord('6'),
+    ord('7'),
+    ord('8'),
+    ord('9'),
+    ord('s'),
+    ord('u')
+]
+
+# create empty samples and responses
 samples = np.empty((0, 100))
+responses = []
 
 cap = cv2.VideoCapture(1)
-cap.set(3, 1280)
-cap.set(4, 720)
 
 while cap.isOpened():
 
     _, img = cap.read()
 
-    img = img[:, 215:]
+    img = img[60:, :]  # cut image to make image look wider
 
     out = img.copy()
 
-    # list_img, out = bj_uno.create_data(img)
-    # card_number = cv2.getTrackbarPos('CardNumber', 'GUI')
+    # roi, out = bj_uno.train_data(img) # use to train data
 
-    # roi, out = bj_uno.train_data(img)
-
-    out = bj_uno.detect_number(img)
+    out = bj_uno.detect_number(img)  # usse to detect image
 
     cv2.imshow('out', out)
+    # cv2.imshow('roi', roi)
 
     wk = cv2.waitKey(10)
 
     if wk == ord('q'):
         break
-    elif wk in keys:
-        roismall = cv2.resize(roi, (10, 10))
-        print(chr(wk))
 
-        responses.append(int(chr(wk)))
+    # train data by key
+    elif wk in keys:
+
+        # make roi smaller for featuring data
+        roismall = cv2.resize(roi, (10, 10))
+        print(chr(wk))  # logging key
+
+        # replace 'u' with 11 in class
+        if chr(wk) == 'u':
+            responses.append(int(11))
+        # replace 'n' with 12 in class
+        elif chr(wk) == 'n':
+            responses.append(int(12))
+        else:
+            responses.append(int(chr(wk)))
+
+        # reshape array to 1*100
         sample = roismall.reshape((1, 100))
+        # add sample to list
         samples = np.append(samples, sample, 0)
 
-        # roismall_flip = cv2.flip(roismall, -1)
-        # responses.append(int(chr(wk)))
-        # sample_flip = roismall_flip.reshape((1, 100))
-        # samples = np.append(samples, sample_flip, 0)
-
+    # save data
     elif wk == ord('s'):
+        # check if overide data or append to exist data
+        if bj_uno.get_new_train == False:
+            last_samples = np.loadtxt('samples.data', np.float32)
+            last_responses = np.loadtxt('responses.data', np.float32)
+            for res in last_responses:
+                responses.append(res)
+            samples = np.append(samples, last_samples, 0)
+
         responses = np.array(responses, np.float32)
         responses = responses.reshape((responses.size, 1))
         np.savetxt('samples.data', samples)
         np.savetxt('responses.data', responses)
-        break
-# elif wk == ord('c'):
-    #     str_num = str(card_number)
-    #     try:
-    #         os.mkdir(data_path)
-    #     except FileExistsError:
-    #         pass
-    #     os.chdir(data_path)
-    #     try:
-    #         os.mkdir(str_num)
-    #     except FileExistsError:
-    #         pass
-    #     for img in list_img:
-    #         count = 0
-    #         for i in glob.glob(f'{str_num}/*.jpg'):
-    #             count += 1
-    #         print(f'write {str_num}')
-    #         cv2.imwrite(f'{str_num}/{count+1}.jpg', img)
-    #         flip_img = cv2.flip(img, 0)
-    #         cv2.imwrite(f'{str_num}/{count+2}.jpg', flip_img)
-
-    #     os.chdir('..')
+        print('saved')
+        responses = []
+        samples = np.empty((0, 100))
 
 
 cap.release()
